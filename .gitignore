@@ -1,0 +1,22 @@
+# Logs (contain user contact info — never commit)
+uploads/mail.log
+*.log
+
+# Production credentials (never commit)
+inc/mail.credentials.php
+inc/db.credentials.php
+BusinessPortal/config/database.credentials.php
+BusinessPortal/config/mail.credentials.php
+
+# Database dumps (contain hashed passwords, contact data)
+*.sql
+!BusinessPortal/config/schema.sql
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+
+# Composer (vendor folders are committed; lock files and cache aren't)
+**/.composer-cache/

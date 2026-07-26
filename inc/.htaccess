@@ -1,0 +1,12 @@
+# /inc/ folder
+# - Block ALL files by default (these are PHP includes, not meant to be web-accessible)
+# - Whitelist only public AJAX/form handlers below
+
+<FilesMatch ".*">
+    Require all denied
+</FilesMatch>
+
+# Public form/AJAX handlers
+<FilesMatch "^(send_appointment|send_inquiries|AddNewsletterMails|fetchCities|fetchCountries)\.php$">
+    Require all granted
+</FilesMatch>

@@ -1,0 +1,16 @@
+{
+    "name": "kayan/kayancommunity_mail",
+    "autoload": {
+        "psr-4": {
+            "kayan\\kayanMail\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "kayan"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "^6.8"
+    }
+}

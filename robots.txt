@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Block admin panel and internal directories from crawlers
+Disallow: /BusinessPortal/
+Disallow: /inc/
+Disallow: /PHPMail/
+Disallow: /php/
+Disallow: /uploads/
+
+# Dynamic sitemap
+Sitemap: https://jpilawfirm.com/sitemap.xml
