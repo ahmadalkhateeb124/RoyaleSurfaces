@@ -1,3 +1,8 @@
+# ── Royale Surfaces ─────────────────────────────────────────────────────────
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -11,49 +16,133 @@
     RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
     RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
+    # Strip trailing slashes so /slabs/ and /slabs aren't duplicate URLs
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} ^(.+)/$
+    RewriteRule ^ %1 [R=301,L]
+
+    # Legacy .html URLs from the previous site → clean equivalents
+    RewriteRule ^products\.html?$    /slabs   [R=301,L,NC]
+    RewriteRule ^products/?$         /slabs   [R=301,L,NC]
+    RewriteRule ^([a-z0-9-]+)\.html$ /$1      [R=301,L,NC]
+
     # Dynamic sitemap.xml → sitemap.php
     RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
+    # Dynamic llms.txt → llms.php (briefing file for AI answer engines)
+    RewriteRule ^llms\.txt$ llms.php [L]
+
+    # Front controller: /slabs → index.php?url=slabs
+    #                   /blog/my-post → index.php?url=blog&puid=my-post
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^([^/]+)(?:/([^/]*))?$ index.php?url=$1&puid=$2 [QSA,L]
 </IfModule>
 
-# Block access to sensitive files
-<FilesMatch "\.(credentials|config|sql|log|md|gitignore|git)$">
-    Require all denied
-</FilesMatch>
-<FilesMatch "^(composer\.(json|lock)|\.env|\.gitignore)$">
+# Let PHP render the 404 page (correct status + site chrome)
+ErrorDocument 404 /index.php
+
+# ── Access control ───────────────────────────────────────────────────────────
+
+# Never serve source, config, backups, logs or VCS metadata
+<FilesMatch "\.(credentials|config|sql|log|md|ini|bak|old|swp|dist|yml|yaml|lock|json)$">
     Require all denied
 </FilesMatch>
 
-# Block direct access to internal folders
+# Dotfiles (.env, .git, .htaccess, .DS_Store, …)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# composer.json is needed by nothing at runtime
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json)$">
+    Require all denied
+</FilesMatch>
+
+# Internal folders — reachable by PHP include, never over HTTP
 RedirectMatch 403 ^/PHPMail/.*$
-RedirectMatch 403 ^/php/.*$
 
-# Compression for faster loading
+# Uploaded images are served but must never execute — enforced by
+# assets/uploads/.htaccess (<Directory> is not valid inside .htaccess).
+
+# robots.txt and the sitemap must stay readable despite the rules above
+<Files "robots.txt">
+    Require all granted
+</Files>
+
+# ── Performance ──────────────────────────────────────────────────────────────
+
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json text/xml application/xml image/svg+xml
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript \
+        application/javascript application/json application/xml text/xml \
+        image/svg+xml application/rss+xml font/woff font/woff2
 </IfModule>
 
-# Browser caching for static assets
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/javascript \
+        application/javascript application/json image/svg+xml
+</IfModule>
+
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType image/jpeg "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/webp "access plus 1 year"
-    ExpiresByType image/svg+xml "access plus 1 year"
-    ExpiresByType image/x-icon "access plus 1 year"
-    ExpiresByType font/woff "access plus 1 year"
-    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresDefault                        "access plus 1 week"
+    ExpiresByType text/html               "access plus 0 seconds"
+    ExpiresByType text/css                "access plus 1 month"
+    ExpiresByType application/javascript  "access plus 1 month"
+    ExpiresByType image/jpeg              "access plus 1 year"
+    ExpiresByType image/png               "access plus 1 year"
+    ExpiresByType image/webp              "access plus 1 year"
+    ExpiresByType image/avif              "access plus 1 year"
+    ExpiresByType image/svg+xml           "access plus 1 year"
+    ExpiresByType image/x-icon            "access plus 1 year"
+    ExpiresByType video/mp4               "access plus 1 year"
+    ExpiresByType video/webm              "access plus 1 year"
+    ExpiresByType font/woff               "access plus 1 year"
+    ExpiresByType font/woff2              "access plus 1 year"
+    ExpiresByType application/xml         "access plus 0 seconds"
 </IfModule>
 
-# Security headers
+# MIME types older Apache builds miss
+<IfModule mod_mime.c>
+    AddType image/webp        .webp
+    AddType image/avif        .avif
+    AddType font/woff2        .woff2
+    AddType image/svg+xml     .svg
+    AddType video/mp4         .mp4
+    AddType video/webm        .webm
+</IfModule>
+
+# ── Security headers ─────────────────────────────────────────────────────────
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+
+    # HSTS — only sent over HTTPS, so localhost is unaffected
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
+
+    # Allows only what this site actually loads: Google Fonts + the Maps embed
+    Header always set Content-Security-Policy "default-src 'self'; \
+img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.google-analytics.com; \
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
+font-src 'self' https://fonts.gstatic.com; \
+script-src 'self' https://www.googletagmanager.com; \
+frame-src https://*.google.com https://maps.google.com; \
+connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; \
+media-src 'self'; \
+form-action 'self'; \
+base-uri 'self'; \
+object-src 'none'; \
+frame-ancestors 'self'"
+
+    # Don't leak the PHP version
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+
+    # Long-lived, immutable static assets
+    <FilesMatch "\.(css|js|jpg|jpeg|png|webp|avif|svg|woff2?|ico|mp4|webm)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
 </IfModule>

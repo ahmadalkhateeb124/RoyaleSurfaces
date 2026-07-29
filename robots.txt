@@ -1,12 +1,56 @@
 User-agent: *
 Allow: /
 
-# Block admin panel and internal directories from crawlers
-Disallow: /BusinessPortal/
+# Internal directories — no crawl value, and some contain credentials
 Disallow: /inc/
 Disallow: /PHPMail/
-Disallow: /php/
-Disallow: /uploads/
+Disallow: /BusinessPortal/
+Allow: /assets/uploads/
 
-# Dynamic sitemap
-Sitemap: https://jpilawfirm.com/sitemap.xml
+# Query strings that duplicate existing pages
+Disallow: /*?inquiry=
+
+# Block bandwidth-heavy SEO-tool scrapers that ignore crawl-delay and bring no
+# referral traffic — distinct from the AI answer-engine crawlers below, which
+# are explicitly welcome.
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# AI answer engines — explicitly welcome. The default "Allow: /" above already
+# covers them, but naming them stops a future blanket AI-blocking rule from
+# silently cutting this site out of ChatGPT/Perplexity/Gemini/AI Overviews
+# answers, and documents the intent for whoever edits this file next.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://royalesurfaces.com/sitemap.xml

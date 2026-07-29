@@ -1,0 +1,25 @@
+# Admin portal.
+#
+# The front-controller rewrite in the parent .htaccess must not swallow these
+# URLs, and nothing in here should ever be indexed.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Serve real files/directories here directly — no rewriting into index.php
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+    Header always set X-Frame-Options "DENY"
+    Header always set Cache-Control "no-store, no-cache, must-revalidate"
+</IfModule>
+
+# Shared includes are not entry points
+<FilesMatch "^(bootstrap|helpers|layout-top|layout-bottom|pager)\.php$">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes

@@ -1,0 +1,25 @@
+# Uploaded images only. Nothing in here may ever be executed.
+#
+# The upload handler already validates real MIME types, but defence in depth
+# matters: if a script ever lands here, the server must refuse to run it.
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Belt and braces for FPM/CGI setups, where php_flag has no effect
+<FilesMatch "\.(php|phar|phtml|php[0-9]|pl|py|cgi|sh|htm|html|shtml)$">
+    Require all denied
+</FilesMatch>
+
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8
+
+Options -Indexes -ExecCGI
+AddHandler default-handler .php .phtml

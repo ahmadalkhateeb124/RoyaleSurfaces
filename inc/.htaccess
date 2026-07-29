@@ -7,6 +7,6 @@
 </FilesMatch>
 
 # Public form/AJAX handlers
-<FilesMatch "^(send_appointment|send_inquiries|AddNewsletterMails|fetchCities|fetchCountries)\.php$">
+<FilesMatch "^(send_inquiry|AddNewsletterMails)\.php$">
     Require all granted
 </FilesMatch>
