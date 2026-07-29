@@ -12,6 +12,12 @@ BusinessPortal/config/mail.credentials.php
 *.sql
 !BusinessPortal/config/schema.sql
 
+# Generated on demand by BusinessPortal/seo.php ("Regenerate" button) — a local
+# snapshot the admin panel reads back to show its own age/URL count. The live
+# /sitemap.xml route always serves sitemap.php's output regardless of this
+# file's presence, so committing a copy only risks it going stale in the repo.
+sitemap.xml
+
 # OS / editor noise
 .DS_Store
 .idea/
